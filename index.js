@@ -29,15 +29,15 @@ async function run() {
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
 
-    // const assignmentCollection = client
-    //   .db("AssignmentsDB")
-    //   .collection("assignments");
+    const assignmentCollection = client
+      .db("AssignmentsDB")
+      .collection("assignments");
 
-    // app.post("/assignments", async (req, res) => {
-    //   const data = req.body;
-    //   const result = assignmentCollection.insertOne(data);
-    //   res.send(result);
-    // });
+    app.post("/assignments", async (req, res) => {
+      const data = req.body;
+      const result = assignmentCollection.insertOne(data);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
