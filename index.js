@@ -33,6 +33,10 @@ async function run() {
       .db("AssignmentsDB")
       .collection("assignments");
 
+    const submissionCollection = client
+      .db("AssignmentsDB")
+      .collection("submissions");
+
     app.post("/assignments", async (req, res) => {
       const data = req.body;
       const result = await assignmentCollection.insertOne(data);
@@ -80,6 +84,13 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await assignmentCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //Assignment submission
+    app.post("/assignment-submission", async (req, res) => {
+      const data = req.body;
+      const result = await submissionCollection.insertOne(data);
       res.send(result);
     });
   } finally {
