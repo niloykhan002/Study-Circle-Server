@@ -112,25 +112,25 @@ async function run() {
       res.send(result);
     });
 
-    // app.patch("/assignment-submission/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const updateInfo = req.body;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const options = { upsert: true };
-    //   const updateDoc = {
-    //     $set: {
-    //       given_mark: updateInfo.given_mark,
-    //       feedback: updateInfo.feedback,
-    //       status: updateInfo.status,
-    //     },
-    //   };
-    //   const result = await submissionCollection.updateOne(
-    //     filter,
-    //     updateDoc,
-    //     options
-    //   );
-    //   res.send(result);
-    // });
+    app.patch("/assignment-submission/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateInfo = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          given_mark: updateInfo.given_mark,
+          feedback: updateInfo.feedback,
+          status: updateInfo.status,
+        },
+      };
+      const result = await submissionCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
