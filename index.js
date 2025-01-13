@@ -1,12 +1,36 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized access" });
+    }
+
+    req.user = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fmfzj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -36,6 +60,28 @@ async function run() {
     const submissionCollection = client
       .db("AssignmentsDB")
       .collection("submissions");
+
+    // Auth related apis
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
+    app.post("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
 
     app.post("/assignments", async (req, res) => {
       const data = req.body;
@@ -96,6 +142,30 @@ async function run() {
 
     app.get("/assignment-submission", async (req, res) => {
       const query = { status: "Pending" };
+      const cursor = submissionCollection.find(query);
+      const result = await cursor.toArray();
+
+      for (submission of result) {
+        const query = { _id: new ObjectId(submission.assignment_id) };
+        const assignment = await assignmentCollection.findOne(query);
+
+        if (assignment) {
+          submission.title = assignment.title;
+          submission.marks = assignment.marks;
+        }
+      }
+
+      res.send(result);
+    });
+
+    app.get("/my-submission", verifyToken, async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
       const cursor = submissionCollection.find(query);
       const result = await cursor.toArray();
 
