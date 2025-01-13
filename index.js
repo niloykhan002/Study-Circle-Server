@@ -93,6 +93,44 @@ async function run() {
       const result = await submissionCollection.insertOne(data);
       res.send(result);
     });
+
+    app.get("/assignment-submission", async (req, res) => {
+      const query = { status: "Pending" };
+      const cursor = submissionCollection.find(query);
+      const result = await cursor.toArray();
+
+      for (submission of result) {
+        const query = { _id: new ObjectId(submission.assignment_id) };
+        const assignment = await assignmentCollection.findOne(query);
+
+        if (assignment) {
+          submission.title = assignment.title;
+          submission.marks = assignment.marks;
+        }
+      }
+
+      res.send(result);
+    });
+
+    // app.patch("/assignment-submission/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const updateInfo = req.body;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       given_mark: updateInfo.given_mark,
+    //       feedback: updateInfo.feedback,
+    //       status: updateInfo.status,
+    //     },
+    //   };
+    //   const result = await submissionCollection.updateOne(
+    //     filter,
+    //     updateDoc,
+    //     options
+    //   );
+    //   res.send(result);
+    // });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
