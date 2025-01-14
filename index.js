@@ -90,7 +90,12 @@ async function run() {
     });
 
     app.get("/assignments", async (req, res) => {
-      const cursor = assignmentCollection.find();
+      const filter = req.query.filter;
+      const query = {};
+      if (filter !== "All") {
+        query.difficulty = filter;
+      }
+      const cursor = assignmentCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
